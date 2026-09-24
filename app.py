@@ -110,7 +110,7 @@ def sidebar() -> None:
 
 def screen_begin() -> None:
     st.markdown('<p class="vf-title">🏎️ Vinnige Fluite 💨</p>', unsafe_allow_html=True)
-    st.markdown('<p class="vf-sub">Die kaartspel met 80 regte karre. Wie het die vinnigste fluit?</p>',
+    st.markdown('<p class="vf-sub">Die kaartspel met 120 regte karre. Wie het die vinnigste fluit?</p>',
                 unsafe_allow_html=True)
 
     saved = storage.load_game()
@@ -138,7 +138,7 @@ def screen_begin() -> None:
 
         with st.expander("📖 Hoe speel mens?"):
             st.markdown(
-                "- Die 80 kaarte word geskommel en uitgedeel.\n"
+                "- Die 120 kaarte word geskommel en uitgedeel.\n"
                 "- Wie se beurt dit is, kyk na sy of haar **boonste kaart** en kies iets om te vergelyk.\n"
                 "- Almal se boonste kaarte word omgedraai. Die beste waarde wen al die kaarte!\n"
                 "  - **Topspoed**, **Krag**, **Wringkrag**, **Produksiejare** en **Enjingrootte**: hoër wen ⬆️\n"
@@ -250,7 +250,7 @@ def screen_oor() -> None:
     st.button("⬅️ Terug", on_click=back_from_about)
     st.markdown("## ℹ️ Oor die kaarte")
     st.markdown(
-        "Al 80 karre is regte karre. Die syfers kom uit publieke bronne (vervaardigers se spesifikasies, "
+        "Al 120 karre is regte karre. Die syfers kom uit publieke bronne (vervaardigers se spesifikasies, "
         "Wikipedia en motortydskrifte se toetse). Tye soos 0–100 km/h en die kwartmyl verskil van toets tot "
         "toets, so dit is **benaderde** syfers. Topspoed is die amptelike (soms elektronies beperkte) waarde, "
         "en massa is die leë gewig.\n\n"

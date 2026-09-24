@@ -15,8 +15,8 @@ def car(cid, **stats):
 
 
 class DataTests(unittest.TestCase):
-    def test_deck_has_80_unique_cards(self):
-        self.assertEqual(len(CARS), 80)
+    def test_deck_has_120_unique_cards(self):
+        self.assertEqual(len(CARS), 120)
 
     def test_fields_and_ranges(self):
         for c in CARS.values():
@@ -111,17 +111,17 @@ class RuleTests(unittest.TestCase):
     def test_deal_keeps_all_cards(self):
         for n in (2, 3, 4):
             g = new_game([(f"P{i}", "") for i in range(n)], list(CARS), rng=random.Random(n))
-            self.assertEqual(g.total_cards(), 80)
-            self.assertEqual({len(p.pile) for p in g.players}, {80 // n})
-            self.assertEqual(len(g.pot), 80 % n)
+            self.assertEqual(g.total_cards(), 120)
+            self.assertEqual({len(p.pile) for p in g.players}, {120 // n})
+            self.assertEqual(len(g.pot), 120 % n)
 
     def test_full_games_finish_and_conserve_cards(self):
         for seed in range(20):
             rng = random.Random(seed)
             g = new_game([("A", ""), ("B", ""), ("C", ""), ("D", "")], list(CARS), rng=rng)
-            while not g.over and g.rounds < 5000:
+            while not g.over and g.rounds < 20000:
                 play_round(g, rng.choice(STATS).key, CARS)
-                self.assertEqual(g.total_cards(), 80)
+                self.assertEqual(g.total_cards(), 120)
                 self.assertTrue(g.players[g.current].active or g.over)
             # an unlimited game can in theory loop forever; with random choices it ends
             self.assertTrue(g.over, f"seed {seed} did not finish")
@@ -152,7 +152,7 @@ class DoctoredGameTests(unittest.TestCase):
         while not g.over and g.rounds < 3000:
             tops = {i: g.players[i].pile[0] for i in g.active_players()}
             r = play_round(g, rng.choice(STATS).key, CARS, rng=rng)
-            self.assertEqual(g.total_cards(), 80)
+            self.assertEqual(g.total_cards(), 120)
             if r.winner is not None and g.players[r.winner].rigged:
                 parent_round_wins += 1
             # a card that was swapped in never comes from the previous round

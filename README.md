@@ -1,9 +1,9 @@
 # 🏎️ Vinnige Fluite 💨
 
-'n Afrikaanse Top Trumps-kaartspel vir kinders: 80 regte karre, 2 tot 4 spelers op een skerm.
+'n Afrikaanse Top Trumps-kaartspel vir kinders: 120 regte karre, 2 tot 4 spelers op een skerm.
 Alles loop plaaslik op jou rekenaar, en jy het geen internet nodig om te speel nie.
 
-*An Afrikaans car Top Trumps game for kids. It has 80 real cars and lets 2–4 players take turns on one screen. It runs locally and offline.*
+*An Afrikaans car Top Trumps game for kids. It has 120 real cars and lets 2–4 players take turns on one screen. It runs locally and offline.*
 
 ## Hoe om te begin / Getting started
 
@@ -41,7 +41,7 @@ Om 'n spesifieke foto vas te pen, voeg `"foto": "File:....jpg"` (die Commons-lê
 
 ## Reëls
 
-- Die 80 kaarte word geskommel en uitgedeel.
+- Die 120 kaarte word geskommel en uitgedeel.
 - Wie se beurt dit is, kies iets van hul boonste kaart. Almal se boonste kaarte word vergelyk.
 - **Hoër wen:** Topspoed, Krag (kW), Wringkrag (Nm), Produksiejare (hoeveel jaar lank gebou), Enjingrootte.
   **Laer wen:** 0–100 km/h, Kwartmyl, Massa.
@@ -58,7 +58,7 @@ Om 'n spesifieke foto vas te pen, voeg `"foto": "File:....jpg"` (die Commons-lê
 | `game/stats.py` | die ses eienskappe en watter kant wen |
 | `game/render.py` | kaart-HTML/CSS |
 | `game/storage.py` | laai kaarte, stoor die spel in `data/savegame.json` |
-| `data/cars.json` | die 80 kaarte |
+| `data/cars.json` | die 120 kaarte |
 | `data/credits.json` | fotograaf en lisensie vir elke foto |
 | `scripts/fetch_images.py` | laai foto's van Wikimedia Commons af |
 
