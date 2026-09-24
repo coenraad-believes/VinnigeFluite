@@ -1,0 +1,16 @@
+[browser]
+gatherUsageStats = false
+
+[server]
+headless = false
+runOnSave = false
+
+[client]
+toolbarMode = "minimal"
+
+[theme]
+base = "light"
+primaryColor = "#e63946"
+backgroundColor = "#fff8ee"
+secondaryBackgroundColor = "#ffe8cc"
+textColor = "#1b1b1b"
