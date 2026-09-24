@@ -35,6 +35,10 @@ class Stat:
         text = f"{v:.1f}".replace(".", ",") if isinstance(v, float) else f"{v:,}".replace(",", " ")
         return f"{text} {self.unit}"
 
+    def choosable(self, car: dict) -> bool:
+        """An electric car has no engine size, so it can't pick Enjingrootte."""
+        return not (self.key == "enjin_cc" and not car["enjin_cc"])
+
     @property
     def hint(self) -> str:
         return "hoër wen ⬆️" if self.higher_wins else "laer wen ⬇️"

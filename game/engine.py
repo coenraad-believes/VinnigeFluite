@@ -138,6 +138,8 @@ def play_round(state: GameState, stat_key: str, cars: dict[str, dict],
         raise RuntimeError("Die spel is klaar")
     stat = BY_KEY[stat_key]
     chooser = state.current
+    if not stat.choosable(cars[state.players[chooser].pile[0]]):
+        raise ValueError(f"{stat.label} kan nie met hierdie kaart gekies word nie")
     tie_off = bool(state.tied)
     order = [chooser] + [i for i in state.contenders() if i != chooser]
     if state.rigged:

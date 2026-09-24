@@ -179,8 +179,10 @@ def screen_kies() -> None:
         st.markdown(card_head_html(top), unsafe_allow_html=True)
         for s in STATS:
             arrow = "⬆️" if s.higher_wins else "⬇️"
+            ok = s.choosable(top)
             st.button(f"{s.icon} {s.label} {arrow}", key=f"stat_{s.key}", on_click=choose, args=(s.key,),
-                      help=s.hint, width="stretch")
+                      help=s.hint if ok else "'n Elektriese kar het nie 'n enjingrootte nie", disabled=not ok,
+                      width="stretch")
         st.markdown(card_foot_html(top, CREDITS.get(top["id"]))
                     + '<div class="vf-credit">⬆️ hoër wen · ⬇️ laer wen</div>', unsafe_allow_html=True)
 

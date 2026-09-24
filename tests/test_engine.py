@@ -14,6 +14,12 @@ def car(cid, **stats):
     return base | stats
 
 
+def pick(g, rng):
+    """A random stat the current player is allowed to choose."""
+    top = CARS[g.players[g.current].pile[0]]
+    return rng.choice([s for s in STATS if s.choosable(top)]).key
+
+
 class DataTests(unittest.TestCase):
     def test_deck_has_124_unique_cards(self):
         self.assertEqual(len(CARS), 124)
@@ -67,6 +73,17 @@ class RuleTests(unittest.TestCase):
         self.assertEqual(cc.display(ev), "⚡ Elektries")
         self.assertEqual(fuel.value(car("p", verbruik_l100=7.2)), 7.2)
         self.assertFalse(fuel.higher_wins)
+
+    def test_electric_car_cannot_choose_engine_size(self):
+        cars = {"ev": car("ev", enjin_cc=0, kwh_100km=18.0), "b1": car("b1"), "a2": car("a2"), "b2": car("b2")}
+        self.assertFalse(BY_KEY["enjin_cc"].choosable(cars["ev"]))
+        self.assertTrue(BY_KEY["enjin_cc"].choosable(cars["b1"]))
+        self.assertTrue(BY_KEY["verbruik_l100"].choosable(cars["ev"]))
+        g = self.game(["ev", "a2"], ["b1", "b2"])
+        with self.assertRaises(ValueError):
+            play_round(g, "enjin_cc", cars)
+        self.assertEqual(g.players[0].pile, ["ev", "a2"])  # nothing was played
+        self.assertEqual(play_round(g, "topspoed_kmh", cars).winner, None)
 
     def test_years_is_span_inclusive(self):
         self.assertEqual(BY_KEY["jare"].value(car("c", jaar_begin=1998, jaar_einde=1998)), 1)
@@ -177,7 +194,7 @@ class RuleTests(unittest.TestCase):
             rng = random.Random(seed)
             g = new_game([("A", ""), ("B", ""), ("C", ""), ("D", "")], list(CARS), rng=rng)
             while not g.over and g.rounds < 20000:
-                play_round(g, rng.choice(STATS).key, CARS)
+                play_round(g, pick(g, rng), CARS)
                 self.assertEqual(g.total_cards(), 124)
                 self.assertTrue(g.players[g.current].active or g.over)
             # an unlimited game can in theory loop forever; with random choices it ends
@@ -185,7 +202,7 @@ class RuleTests(unittest.TestCase):
 
     def test_save_roundtrip(self):
         g = new_game([("A", "🔴"), ("B", "🔵")], list(CARS), max_rounds=20, rng=random.Random(1))
-        play_round(g, "enjin_cc", CARS)
+        play_round(g, "topspoed_kmh", CARS)
         again = GameState.from_dict(g.to_dict())
         self.assertEqual(again, g)
 
@@ -208,7 +225,7 @@ class DoctoredGameTests(unittest.TestCase):
         previous = set()
         while not g.over and g.rounds < 3000:
             tops = {i: g.players[i].pile[0] for i in g.active_players()}
-            r = play_round(g, rng.choice(STATS).key, CARS, rng=rng)
+            r = play_round(g, pick(g, rng), CARS, rng=rng)
             self.assertEqual(g.total_cards(), 124)
             if r.winner is not None and g.players[r.winner].rigged:
                 parent_round_wins += 1
@@ -246,7 +263,7 @@ class DoctoredGameTests(unittest.TestCase):
                 if g.over:
                     break
                 seen = g.players[g.current].pile[0]
-                r = play_round(g, rng.choice(STATS).key, CARS, rng=rng)
+                r = play_round(g, pick(g, rng), CARS, rng=rng)
                 self.assertEqual(r.played[r.chooser], seen)
 
     def test_normal_game_is_never_doctored(self):

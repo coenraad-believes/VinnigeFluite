@@ -141,7 +141,8 @@ div[class*="st-key-kieskaart"] .stButton button { width:100%; min-height:2.5rem;
   font-size:.98rem; font-weight:600; transition:transform .08s; }
 div[class*="st-key-kieskaart"] .stButton button::after { margin-left:auto; padding-left:10px; font-weight:800;
   font-variant-numeric:tabular-nums; white-space:nowrap; }
-div[class*="st-key-kieskaart"] .stButton button:hover { background:#ffd60a; border-color:var(--tint); transform:scale(1.02); }
+div[class*="st-key-kieskaart"] .stButton button:disabled { opacity:.45; text-decoration:line-through; cursor:not-allowed; }
+div[class*="st-key-kieskaart"] .stButton button:hover:enabled { background:#ffd60a; border-color:var(--tint); transform:scale(1.02); }
 div[class*="st-key-kieskaart"] .stButton button { justify-content:flex-start !important; }
 div[class*="st-key-kieskaart"] .stButton button > div,
 div[class*="st-key-kieskaart"] .stButton button > div > span { justify-content:flex-start !important; }
