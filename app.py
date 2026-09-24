@@ -15,7 +15,8 @@ st.markdown(CSS, unsafe_allow_html=True)
 CARS = storage.load_cars()
 CREDITS = storage.load_credits()
 EMOJIS = ["🔴", "🔵", "🟢", "🟡"]
-LENGTHS = {"Kort (20 rondtes)": 20, "Medium (40 rondtes)": 40, "Volledig (tot een wen alles)": None}
+EIE = "Eie keuse"
+LENGTHS = {"Kort (20 rondtes)": 20, "Medium (40 rondtes)": 40, "Volledig (tot een wen alles)": None, EIE: None}
 
 ss = st.session_state
 ss.setdefault("screen", "begin")
@@ -39,9 +40,9 @@ def who(i: int) -> str:
 
 # ---------- actions ----------
 
-def start_game(n: int, names: list[str], length: str) -> None:
+def start_game(n: int, names: list[str], max_rounds: int | None) -> None:
     players = [(names[i].strip() or f"Speler {i + 1}", EMOJIS[i]) for i in range(n)]
-    ss.game = new_game(players, list(CARS), max_rounds=LENGTHS[length])
+    ss.game = new_game(players, list(CARS), max_rounds=max_rounds)
     ss.celebrated = False
     go("gee_oor")
 
@@ -130,7 +131,10 @@ def screen_begin() -> None:
                 names.append(st.text_input(f"{EMOJIS[i]} Speler {i + 1}", value=f"Speler {i + 1}",
                                            key=f"name{i}", max_chars=16))
         length = st.radio("Hoe lank wil julle speel?", list(LENGTHS), horizontal=True)
-        st.button("🏁 Speel!", on_click=start_game, args=(n, names, length), type="primary", width="stretch")
+        max_rounds = LENGTHS[length]
+        if length == EIE:
+            max_rounds = int(st.number_input("Hoeveel rondtes?", min_value=1, max_value=500, value=30, step=5))
+        st.button("🏁 Speel!", on_click=start_game, args=(n, names, max_rounds), type="primary", width="stretch")
 
         with st.expander("📖 Hoe speel mens?"):
             st.markdown(
