@@ -9,6 +9,12 @@ Rules:
 - On a tie the cards go into the pot and the chooser keeps the turn.
 - Players with no cards left are out. The game ends when one player is left, or when
   the round limit (if any) is reached — then the player with the most cards wins.
+
+Gedokterde spel: a player called "Pappa" or "Mamma" can't win. Before the cards are compared,
+the hidden top cards (everyone's except the chooser's, which the chooser has already seen) are
+quietly swapped for another card from that same player's own pile, so that a kid wins the round.
+Swaps only happen when needed, pick randomly among the cards that work, and never use a card
+from the last two rounds, so it doesn't look suspicious. The winner screen reveals it afterwards.
 """
 
 from __future__ import annotations
@@ -16,7 +22,10 @@ from __future__ import annotations
 import random
 from dataclasses import asdict, dataclass, field
 
-from game.stats import BY_KEY
+from game.stats import BY_KEY, Stat
+
+RIGGED_NAMES = {"pappa", "mamma"}
+RECENT_ROUNDS = 2  # cards from this many previous rounds are never swapped in
 
 
 @dataclass
@@ -28,6 +37,11 @@ class Player:
     @property
     def active(self) -> bool:
         return bool(self.pile)
+
+    @property
+    def rigged(self) -> bool:
+        """Pappa and Mamma can't win."""
+        return self.naam.strip().casefold() in RIGGED_NAMES
 
 
 @dataclass
@@ -48,6 +62,13 @@ class GameState:
     rounds: int = 0
     max_rounds: int | None = None
     last: RoundResult | None = None
+    recent: list[list[str]] = field(default_factory=list)  # cards played in the last few rounds
+    swaps: int = 0  # how many times a card was quietly swapped
+
+    @property
+    def rigged(self) -> bool:
+        """True when the game is being doctored: a Pappa/Mamma plays against at least one kid."""
+        return any(p.rigged for p in self.players) and not all(p.rigged for p in self.players)
 
     def active_players(self) -> list[int]:
         return [i for i, p in enumerate(self.players) if p.active]
@@ -83,7 +104,8 @@ class GameState:
                                   "played": {int(k): v for k, v in last["played"].items()},
                                   "values": {int(k): v for k, v in last["values"].items()}})
         return cls(players=[Player(**p) for p in d["players"]], current=d["current"], pot=d["pot"],
-                   rounds=d["rounds"], max_rounds=d["max_rounds"], last=last)
+                   rounds=d["rounds"], max_rounds=d["max_rounds"], last=last,
+                   recent=d.get("recent", []), swaps=d.get("swaps", 0))
 
 
 def new_game(players: list[tuple[str, str]], card_ids: list[str], max_rounds: int | None = None,
@@ -102,12 +124,15 @@ def new_game(players: list[tuple[str, str]], card_ids: list[str], max_rounds: in
     return state
 
 
-def play_round(state: GameState, stat_key: str, cars: dict[str, dict]) -> RoundResult:
+def play_round(state: GameState, stat_key: str, cars: dict[str, dict],
+               rng: random.Random | None = None) -> RoundResult:
     if state.over:
         raise RuntimeError("Die spel is klaar")
     stat = BY_KEY[stat_key]
     chooser = state.current
     order = [chooser] + [i for i in state.active_players() if i != chooser]
+    if state.rigged:
+        _doctor(state, stat, cars, order, rng or random.Random())
     played = {i: state.players[i].pile.pop(0) for i in order}
     values = {i: stat.value(cars[c]) for i, c in played.items()}
 
@@ -126,6 +151,7 @@ def play_round(state: GameState, stat_key: str, cars: dict[str, dict]) -> RoundR
             state.current = _next_active(state, chooser)
 
     state.rounds += 1
+    state.recent = (state.recent + [list(played.values())])[-RECENT_ROUNDS:]
     state.last = RoundResult(chooser, stat_key, played, values, winner, pot_won)
     return state.last
 
@@ -137,3 +163,69 @@ def _next_active(state: GameState, start: int) -> int:
         if state.players[i].active:
             return i
     return start
+
+
+def _beats(stat: Stat, a: float, b: float) -> bool:
+    return a > b if stat.higher_wins else a < b
+
+
+def _doctor(state: GameState, stat: Stat, cars: dict[str, dict], order: list[int], rng: random.Random) -> None:
+    """Quietly swap hidden top cards so that a kid (not Pappa/Mamma) wins this round.
+
+    The chooser's top card is never touched, because the chooser has already seen it. Every
+    other player's top card is still face down, so it can be exchanged for another card from
+    that player's own pile (the old top card simply stays in the pile, one place lower).
+    """
+    chooser = order[0]
+    kids = [i for i in order if not state.players[i].rigged]
+    parents = [i for i in order if state.players[i].rigged]
+    if not kids or not parents:
+        return
+    recent = {c for rnd in state.recent for c in rnd}
+
+    def val(cid: str) -> float:
+        return stat.value(cars[cid])
+
+    def top(i: int) -> float:
+        return val(state.players[i].pile[0])
+
+    def swap_to_top(i: int, ok) -> bool:
+        """Move a random card from player i's pile that satisfies ok(value) to the top."""
+        pile = state.players[i].pile
+        options = [n for n, cid in enumerate(pile) if n > 0 and cid not in recent and ok(val(cid))]
+        if not options:
+            return False
+        n = rng.choice(options)
+        pile.insert(0, pile.pop(n))
+        state.swaps += 1
+        return True
+
+    def best(values):
+        values = list(values)
+        return max(values) if stat.higher_wins else min(values)
+
+    # 1. Make sure some kid holds a card that beats the chooser's card if a parent chose, or at
+    #    least the kids' best card when a kid chose. Only hidden (non-chooser) kid cards can change.
+    target = best(top(i) for i in kids)
+    if chooser in parents and not _beats(stat, target, top(chooser)):
+        needed = top(chooser)
+        helpers = [i for i in kids if i != chooser]
+        rng.shuffle(helpers)
+        for i in helpers:
+            if swap_to_top(i, lambda v: _beats(stat, v, needed)):
+                break
+        target = best(top(i) for i in kids)
+
+    # 2. Every other parent must end up with a card that loses to the kids' best card.
+    for i in parents:
+        if i == chooser or _beats(stat, target, top(i)):
+            continue
+        if not swap_to_top(i, lambda v: _beats(stat, target, v)):
+            # No losing card in that parent's pile: give a kid an even stronger card instead.
+            helpers = [k for k in kids if k != chooser]
+            rng.shuffle(helpers)
+            current = top(i)
+            for k in helpers:
+                if swap_to_top(k, lambda v: _beats(stat, v, current)):
+                    target = best(top(j) for j in kids)
+                    break

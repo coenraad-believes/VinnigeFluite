@@ -133,5 +133,69 @@ class RuleTests(unittest.TestCase):
         self.assertEqual(again, g)
 
 
+class DoctoredGameTests(unittest.TestCase):
+    """Pappa and Mamma can't win."""
+
+    def test_who_is_rigged(self):
+        self.assertTrue(Player(" pAppa ", "").rigged)
+        self.assertTrue(Player("Mamma", "").rigged)
+        self.assertFalse(Player("Pa", "").rigged)
+        self.assertFalse(GameState(players=[Player("Anna", ""), Player("Jan", "")]).rigged)
+        self.assertFalse(GameState(players=[Player("Pappa", ""), Player("Mamma", "")]).rigged)
+        self.assertTrue(GameState(players=[Player("Pappa", ""), Player("Anna", "")]).rigged)
+
+    def play(self, names, seed, max_rounds=None):
+        rng = random.Random(seed)
+        g = new_game([(n, "") for n in names], list(CARS), max_rounds=max_rounds, rng=rng)
+        parent_round_wins = 0
+        previous = set()
+        while not g.over and g.rounds < 3000:
+            tops = {i: g.players[i].pile[0] for i in g.active_players()}
+            r = play_round(g, rng.choice(STATS).key, CARS, rng=rng)
+            self.assertEqual(g.total_cards(), 80)
+            if r.winner is not None and g.players[r.winner].rigged:
+                parent_round_wins += 1
+            # a card that was swapped in never comes from the previous round
+            swapped = {c for i, c in r.played.items() if c != tops[i]}
+            self.assertFalse(previous & swapped)
+            previous = set(r.played.values())
+        return g, parent_round_wins
+
+    def test_parents_never_win_the_game(self):
+        lineups = [["Pappa", "Anna"], ["Anna", "Mamma"], ["Pappa", "Anna", "Jan"],
+                   ["Mamma", "Anna", "Pappa", "Jan"], ["Anna", "Jan", "Mamma"]]
+        total_rounds = total_parent_wins = 0
+        for names in lineups:
+            for seed in range(15):
+                for limit in (20, 40, None):
+                    with self.subTest(names=names, seed=seed, limit=limit):
+                        g, wins = self.play(names, seed, limit)
+                        if g.over:
+                            self.assertTrue(g.winners())
+                            for i in g.winners():
+                                self.assertFalse(g.players[i].rigged)
+                        else:  # two kids can play an unlimited game for a very long time
+                            self.assertFalse(any(p.rigged and p.active for p in g.players))
+                        total_rounds += g.rounds
+                        total_parent_wins += wins
+        # a parent only wins a round when no pile has a card that can beat theirs: rare
+        self.assertLess(total_parent_wins / total_rounds, 0.03)
+
+    def test_chooser_card_is_never_swapped(self):
+        for seed in range(30):
+            rng = random.Random(seed)
+            g = new_game([("Pappa", ""), ("Anna", "")], list(CARS), rng=rng)
+            for _ in range(15):
+                if g.over:
+                    break
+                seen = g.players[g.current].pile[0]
+                r = play_round(g, rng.choice(STATS).key, CARS, rng=rng)
+                self.assertEqual(r.played[r.chooser], seen)
+
+    def test_normal_game_is_never_doctored(self):
+        g, _ = self.play(["Anna", "Jan", "Pa"], seed=3)
+        self.assertEqual(g.swaps, 0)
+
+
 if __name__ == "__main__":
     unittest.main()

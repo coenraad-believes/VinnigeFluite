@@ -130,6 +130,9 @@ div[class*="st-key-kieskaart"] .vf-fact { padding-top:8px; }
 .vf-banner { text-align:center; font-size:1.8rem; font-weight:900; margin:4px 0 14px; }
 .vf-title { text-align:center; font-size:3rem; font-weight:900; margin:0; }
 .vf-sub { text-align:center; font-size:1.1rem; color:#666; margin-bottom:18px; }
+.vf-geheim { max-width:560px; margin:0 auto 18px; text-align:center; font-size:1.2rem; font-weight:700;
+  background:#fff3bf; border:3px dashed #f18f01; border-radius:16px; padding:14px 18px;
+  font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, sans-serif; }
 .vf-curtain { text-align:center; font-size:2.2rem; font-weight:900; padding:40px 10px 20px; }
 div.stButton > button { font-size:1.05rem; font-weight:700; min-height:3rem; border-radius:12px; }
 </style>

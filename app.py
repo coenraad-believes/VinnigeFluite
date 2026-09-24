@@ -223,6 +223,15 @@ def screen_einde() -> None:
         ss.celebrated = True
     storage.clear_game()
 
+    # Only now, once a kid has won, reveal that Pappa/Mamma never stood a chance.
+    if g.rigged and winners and not any(g.players[i].rigged for i in winners):
+        parents = " en ".join(who(i) for i, p in enumerate(g.players) if p.rigged)
+        kon = "kon" if parents.count(" en ") == 0 else "kon albei"
+        st.markdown(
+            f'<div class="vf-geheim">🤫 Psst... hierdie spel was gedokter!<br>'
+            f'{parents} {kon} nooit wen nie. Die kaarte is {g.swaps} keer stilletjies omgeruil. 😉</div>',
+            unsafe_allow_html=True)
+
     left, mid, right = st.columns([1, 1, 1])
     with mid:
         ranked = sorted(range(len(g.players)), key=lambda i: -len(g.players[i].pile))
