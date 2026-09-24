@@ -10,13 +10,13 @@ CARS = load_cars()
 
 def car(cid, **stats):
     base = dict(id=cid, topspoed_kmh=200, nul_tot_100_s=6.0, kwartmyl_s=14.0, massa_kg=1300,
-                jaar_begin=2000, jaar_einde=2004, enjin_cc=2000, krag_kw=150, wringkrag_nm=300)
+                jaar_begin=2000, jaar_einde=2004, enjin_cc=2000, krag_kw=150, wringkrag_nm=300, verbruik_l100=9.0)
     return base | stats
 
 
 class DataTests(unittest.TestCase):
-    def test_deck_has_120_unique_cards(self):
-        self.assertEqual(len(CARS), 120)
+    def test_deck_has_124_unique_cards(self):
+        self.assertEqual(len(CARS), 124)
 
     def test_fields_and_ranges(self):
         for c in CARS.values():
@@ -24,12 +24,18 @@ class DataTests(unittest.TestCase):
                 for key in ("naam", "maker", "land", "wiki_title", "foto_soek", "feit"):
                     self.assertTrue(c[key])
                 self.assertTrue(100 <= c["topspoed_kmh"] <= 500)
-                self.assertTrue(2.0 <= c["nul_tot_100_s"] <= 40)
+                self.assertTrue(1.5 <= c["nul_tot_100_s"] <= 40)
                 self.assertTrue(8.0 <= c["kwartmyl_s"] <= 26)
                 self.assertTrue(600 <= c["massa_kg"] <= 3000)
-                self.assertTrue(900 <= c["enjin_cc"] <= 8500)
-                self.assertTrue(20 <= c["krag_kw"] <= 1200)
-                self.assertTrue(80 <= c["wringkrag_nm"] <= 1700)
+                if c.get("kwh_100km"):  # electric: no engine, petrol-equivalent consumption
+                    self.assertEqual(c["enjin_cc"], 0)
+                    self.assertNotIn("verbruik_l100", c)
+                    self.assertTrue(10 <= c["kwh_100km"] <= 35)
+                else:
+                    self.assertTrue(900 <= c["enjin_cc"] <= 8500)
+                    self.assertTrue(1.0 <= c["verbruik_l100"] <= 30)
+                self.assertTrue(20 <= c["krag_kw"] <= 1500)
+                self.assertTrue(80 <= c["wringkrag_nm"] <= 2500)
                 self.assertTrue(1930 <= c["jaar_begin"] <= c["jaar_einde"] <= 2026)
                 # a quarter mile takes longer than 0-100 km/h (except for the very slowest cars,
                 # e.g. a Beetle 1200 finishes the quarter mile before it reaches 100 km/h)
@@ -43,7 +49,7 @@ class RuleTests(unittest.TestCase):
 
     def test_direction_of_every_stat(self):
         fast = car("fast", topspoed_kmh=300, nul_tot_100_s=3.0, kwartmyl_s=11.0, massa_kg=1000,
-                   jaar_begin=1990, jaar_einde=2020, enjin_cc=6000, krag_kw=400, wringkrag_nm=700)
+                   jaar_begin=1990, jaar_einde=2020, enjin_cc=6000, krag_kw=400, wringkrag_nm=700, verbruik_l100=5.0)
         slow = car("slow")
         cars = {"fast": fast, "slow": slow}
         for stat in STATS:
@@ -52,6 +58,15 @@ class RuleTests(unittest.TestCase):
                 cars |= {"x": car("x"), "y": car("y")}
                 r = play_round(g, stat.key, cars)
                 self.assertEqual(r.winner, 1)
+
+    def test_electric_cars_get_petrol_equivalent(self):
+        fuel, cc = BY_KEY["verbruik_l100"], BY_KEY["enjin_cc"]
+        ev = car("ev", enjin_cc=0, kwh_100km=17.8)
+        self.assertEqual(fuel.value(ev), 2.0)  # 17.8 kWh / 8.9 kWh per litre
+        self.assertEqual(fuel.display(ev), "⚡ 2,0 l/100 km")
+        self.assertEqual(cc.display(ev), "⚡ Elektries")
+        self.assertEqual(fuel.value(car("p", verbruik_l100=7.2)), 7.2)
+        self.assertFalse(fuel.higher_wins)
 
     def test_years_is_span_inclusive(self):
         self.assertEqual(BY_KEY["jare"].value(car("c", jaar_begin=1998, jaar_einde=1998)), 1)
@@ -90,6 +105,48 @@ class RuleTests(unittest.TestCase):
         self.assertTrue(g.over)
         self.assertEqual(g.winners(), [0])
 
+    def test_only_tied_players_play_the_afspeel(self):
+        cars = {"a1": car("a1"), "b1": car("b1", massa_kg=900), "c1": car("c1", massa_kg=900),
+                "a2": car("a2", massa_kg=500), "b2": car("b2"), "c2": car("c2", massa_kg=800)}
+        g = GameState(players=[Player("A", "", ["a1", "a2"]), Player("B", "", ["b1", "b2"]),
+                               Player("C", "", ["c1", "c2"])])
+        r = play_round(g, "massa_kg", cars)  # A chose, B and C tie
+        self.assertIsNone(r.winner)
+        self.assertEqual(g.tied, [1, 2])
+        self.assertEqual(g.current, 1)  # A is not in the afspeel, so B chooses
+        r = play_round(g, "massa_kg", cars)  # A's a2 would have won, but A sits this one out
+        self.assertTrue(r.tie_off)
+        self.assertEqual(set(r.played), {1, 2})
+        self.assertEqual(r.winner, 2)
+        self.assertEqual(r.pot_won, 3)
+        self.assertEqual(g.players[0].pile, ["a2"])
+        self.assertEqual(g.tied, [])
+        self.assertEqual(g.contenders(), [0, 2])  # B played their last card
+
+    def test_afspeel_repeats_until_someone_wins(self):
+        cars = {k: car(k) for k in ["a1", "a2", "b1", "b2", "c1", "c2"]}
+        cars["c1"]["massa_kg"] = 2000
+        cars["b2"]["massa_kg"] = 900
+        g = GameState(players=[Player("A", "", ["a1", "a2"]), Player("B", "", ["b1", "b2"]),
+                               Player("C", "", ["c1", "c2"])])
+        play_round(g, "massa_kg", cars)  # A and B tie, C loses
+        self.assertEqual(g.tied, [0, 1])
+        self.assertEqual(g.current, 0)  # A chose and is in the tie
+        r = play_round(g, "massa_kg", cars)
+        self.assertEqual(set(r.played), {0, 1})
+        self.assertEqual(r.winner, 1)
+        self.assertEqual(sorted(g.players[1].pile), ["a1", "a2", "b1", "b2", "c1"])
+
+    def test_afspeel_needs_two_players_with_cards(self):
+        cars = {k: car(k) for k in ["a1", "b1", "b2", "c1", "c2"]}
+        cars["c1"]["massa_kg"] = 2000
+        g = GameState(players=[Player("A", "", ["a1"]), Player("B", "", ["b1", "b2"]),
+                               Player("C", "", ["c1", "c2"])])
+        play_round(g, "massa_kg", cars)  # A and B tie, but A is now out
+        self.assertEqual(g.tied, [])
+        self.assertEqual(g.current, 1)
+        self.assertEqual(g.contenders(), [1, 2])
+
     def test_eliminated_player_skipped_and_turn_moves_on_tie(self):
         cars = {k: car(k) for k in ["a1", "b1", "c1", "c2"]}
         g = GameState(players=[Player("A", "", ["a1"]), Player("B", "", ["b1"]), Player("C", "", ["c1", "c2"])])
@@ -111,9 +168,9 @@ class RuleTests(unittest.TestCase):
     def test_deal_keeps_all_cards(self):
         for n in (2, 3, 4):
             g = new_game([(f"P{i}", "") for i in range(n)], list(CARS), rng=random.Random(n))
-            self.assertEqual(g.total_cards(), 120)
-            self.assertEqual({len(p.pile) for p in g.players}, {120 // n})
-            self.assertEqual(len(g.pot), 120 % n)
+            self.assertEqual(g.total_cards(), 124)
+            self.assertEqual({len(p.pile) for p in g.players}, {124 // n})
+            self.assertEqual(len(g.pot), 124 % n)
 
     def test_full_games_finish_and_conserve_cards(self):
         for seed in range(20):
@@ -121,7 +178,7 @@ class RuleTests(unittest.TestCase):
             g = new_game([("A", ""), ("B", ""), ("C", ""), ("D", "")], list(CARS), rng=rng)
             while not g.over and g.rounds < 20000:
                 play_round(g, rng.choice(STATS).key, CARS)
-                self.assertEqual(g.total_cards(), 120)
+                self.assertEqual(g.total_cards(), 124)
                 self.assertTrue(g.players[g.current].active or g.over)
             # an unlimited game can in theory loop forever; with random choices it ends
             self.assertTrue(g.over, f"seed {seed} did not finish")
@@ -152,7 +209,7 @@ class DoctoredGameTests(unittest.TestCase):
         while not g.over and g.rounds < 3000:
             tops = {i: g.players[i].pile[0] for i in g.active_players()}
             r = play_round(g, rng.choice(STATS).key, CARS, rng=rng)
-            self.assertEqual(g.total_cards(), 120)
+            self.assertEqual(g.total_cards(), 124)
             if r.winner is not None and g.players[r.winner].rigged:
                 parent_round_wins += 1
             # a card that was swapped in never comes from the previous round

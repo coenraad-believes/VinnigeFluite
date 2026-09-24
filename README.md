@@ -1,9 +1,9 @@
 # 🏎️ Vinnige Fluite 💨
 
-'n Afrikaanse Top Trumps-kaartspel vir kinders: 120 regte karre, 2 tot 4 spelers op een skerm.
+'n Afrikaanse Top Trumps-kaartspel vir kinders: 124 regte karre, 2 tot 4 spelers op een skerm.
 Alles loop plaaslik op jou rekenaar, en jy het geen internet nodig om te speel nie.
 
-*An Afrikaans car Top Trumps game for kids. It has 120 real cars and lets 2–4 players take turns on one screen. It runs locally and offline.*
+*An Afrikaans car Top Trumps game for kids. It has 124 real cars and lets 2–4 players take turns on one screen. It runs locally and offline.*
 
 ## Hoe om te begin / Getting started
 
@@ -41,12 +41,14 @@ Om 'n spesifieke foto vas te pen, voeg `"foto": "File:....jpg"` (die Commons-lê
 
 ## Reëls
 
-- Die 120 kaarte word geskommel en uitgedeel.
+- Die 124 kaarte word geskommel en uitgedeel.
 - Wie se beurt dit is, kies iets van hul boonste kaart. Almal se boonste kaarte word vergelyk.
 - **Hoër wen:** Topspoed, Krag (kW), Wringkrag (Nm), Produksiejare (hoeveel jaar lank gebou), Enjingrootte.
-  **Laer wen:** 0–100 km/h, Kwartmyl, Massa.
+  **Laer wen:** 0–100 km/h, Kwartmyl, Massa, Brandstof (l/100 km).
+- Elektriese karre ⚡ het geen enjingrootte nie (0 cc). Hul brandstofverbruik is die Europese petrol-ekwivalent:
+  kWh per 100 km gedeel deur 8,9 (die energie in een liter petrol).
 - As jy wen, is dit weer jou beurt. As iemand jou klop, is dit hulle beurt.
-- Gelykop: die kaarte gaan in die pot, en die volgende wenner kry alles.
+- Gelykop: die kaarte gaan in die pot, en net die spelers wat gelykop was, speel 'n afspeel totdat een wen en die pot kry.
 - Wie al die kaarte het, of die meeste as die rondtes op is, wen.
 
 ## Projek
@@ -55,10 +57,10 @@ Om 'n spesifieke foto vas te pen, voeg `"foto": "File:....jpg"` (die Commons-lê
 |---|---|
 | `app.py` | Streamlit-skerms |
 | `game/engine.py` | spelreëls (suiwer Python, getoets) |
-| `game/stats.py` | die ses eienskappe en watter kant wen |
+| `game/stats.py` | die eienskappe en watter kant wen |
 | `game/render.py` | kaart-HTML/CSS |
 | `game/storage.py` | laai kaarte, stoor die spel in `data/savegame.json` |
-| `data/cars.json` | die 120 kaarte |
+| `data/cars.json` | die 124 kaarte |
 | `data/credits.json` | fotograaf en lisensie vir elke foto |
 | `scripts/fetch_images.py` | laai foto's van Wikimedia Commons af |
 

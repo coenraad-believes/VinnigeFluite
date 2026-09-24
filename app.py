@@ -95,7 +95,8 @@ def sidebar() -> None:
             for i, p in enumerate(g.players):
                 turn = " ⬅️ beurt" if i == g.current and not g.over else ""
                 out = " — uit 😢" if not p.active else ""
-                st.markdown(f"**{p.emoji} {html.escape(p.naam)}**: {len(p.pile)} kaarte{turn}{out}")
+                afspeel = " ⚔️" if i in g.tied else ""
+                st.markdown(f"**{p.emoji} {html.escape(p.naam)}**: {len(p.pile)} kaarte{afspeel}{turn}{out}")
             st.markdown(f"🪙 **Pot:** {len(g.pot)} kaarte")
             limit = f" van {g.max_rounds}" if g.max_rounds else ""
             st.markdown(f"🔁 **Rondte:** {g.rounds}{limit}")
@@ -110,7 +111,7 @@ def sidebar() -> None:
 
 def screen_begin() -> None:
     st.markdown('<p class="vf-title">🏎️ Vinnige Fluite 💨</p>', unsafe_allow_html=True)
-    st.markdown('<p class="vf-sub">Die kaartspel met 120 regte karre. Wie het die vinnigste fluit?</p>',
+    st.markdown('<p class="vf-sub">Die kaartspel met 124 regte karre. Wie het die vinnigste fluit?</p>',
                 unsafe_allow_html=True)
 
     saved = storage.load_game()
@@ -138,13 +139,14 @@ def screen_begin() -> None:
 
         with st.expander("📖 Hoe speel mens?"):
             st.markdown(
-                "- Die 120 kaarte word geskommel en uitgedeel.\n"
+                "- Die 124 kaarte word geskommel en uitgedeel.\n"
                 "- Wie se beurt dit is, kyk na sy of haar **boonste kaart** en kies iets om te vergelyk.\n"
                 "- Almal se boonste kaarte word omgedraai. Die beste waarde wen al die kaarte!\n"
                 "  - **Topspoed**, **Krag**, **Wringkrag**, **Produksiejare** en **Enjingrootte**: hoër wen ⬆️\n"
-                "  - **0–100 km/h**, **Kwartmyl** en **Massa**: laer wen ⬇️\n"
+                "  - **0–100 km/h**, **Kwartmyl**, **Massa** en **Brandstof**: laer wen ⬇️\n"
                 "- As jy wen, is dit weer jou beurt. As iemand jou klop, is dit hulle beurt.\n"
-                "- Gelykop? Die kaarte gaan in die **pot**, en die wenner van die volgende rondte kry alles.\n"
+                "- Gelykop? Die kaarte gaan in die **pot**. Net die spelers wat gelykop was, speel 'n **afspeel** ⚔️ "
+                "totdat een van hulle wen en die hele pot kry.\n"
                 "- Wie al die kaarte het (of die meeste as die rondtes op is), wen!"
             )
 
@@ -165,7 +167,10 @@ def screen_kies() -> None:
     p = g.players[g.current]
     top = CARS[p.pile[0]]
     st.markdown(f'<div class="vf-banner">{who(g.current)}, tik op jou sterkste punt!</div>', unsafe_allow_html=True)
-    others = [i for i in g.active_players() if i != g.current]
+    others = [i for i in g.contenders() if i != g.current]
+    if g.tied:
+        st.markdown(f'<p class="vf-sub">⚔️ Afspeel om die pot ({len(g.pot)} kaarte)! '
+                    'Net die spelers wat gelykop was, speel.</p>', unsafe_allow_html=True)
     st.markdown('<p class="vf-sub">Teen: ' + ", ".join(
         f"{who(i)} ({len(g.players[i].pile)} kaarte)" for i in others) + "</p>", unsafe_allow_html=True)
 
@@ -175,7 +180,7 @@ def screen_kies() -> None:
         for s in STATS:
             arrow = "⬆️" if s.higher_wins else "⬇️"
             st.button(f"{s.icon} {s.label} {arrow}", key=f"stat_{s.key}", on_click=choose, args=(s.key,),
-                      help=s.hint)
+                      help=s.hint, width="stretch")
         st.markdown(card_foot_html(top, CREDITS.get(top["id"]))
                     + '<div class="vf-credit">⬆️ hoër wen · ⬇️ laer wen</div>', unsafe_allow_html=True)
 
@@ -184,8 +189,13 @@ def screen_onthul() -> None:
     g: GameState = ss.game
     r = g.last
     stat = BY_KEY[r.stat]
-    if r.winner is None:
+    if r.winner is None and g.tied:
+        names = " en ".join(who(i) for i in g.tied)
+        banner = f"🤝 Gelykop op {stat.label}! Die kaarte gaan in die pot. ⚔️ Afspeel: net {names} speel volgende."
+    elif r.winner is None:
         banner = f"🤝 Gelykop op {stat.label}! Die kaarte gaan in die pot."
+    elif r.tie_off:
+        banner = f"⚔️ {who(r.winner)} wen die afspeel met {stat.label}!"
     elif r.winner == r.chooser:
         banner = f"🎉 {who(r.winner)} wen met {stat.label}! Dis weer jou beurt."
     else:
@@ -250,10 +260,11 @@ def screen_oor() -> None:
     st.button("⬅️ Terug", on_click=back_from_about)
     st.markdown("## ℹ️ Oor die kaarte")
     st.markdown(
-        "Al 120 karre is regte karre. Die syfers kom uit publieke bronne (vervaardigers se spesifikasies, "
+        "Al 124 karre is regte karre. Die syfers kom uit publieke bronne (vervaardigers se spesifikasies, "
         "Wikipedia en motortydskrifte se toetse). Tye soos 0–100 km/h en die kwartmyl verskil van toets tot "
         "toets, so dit is **benaderde** syfers. Topspoed is die amptelike (soms elektronies beperkte) waarde, "
-        "en massa is die leë gewig.\n\n"
+        "en massa is die leë gewig. Brandstof is die amptelike Europese gekombineerde verbruik. Elektriese karre ⚡ "
+        "kry die Europese petrol-ekwivalent: hul kWh per 100 km gedeel deur 8,9 (die energie in een liter petrol).\n\n"
         "Die foto's kom van **Wikimedia Commons** en word onder vrye lisensies gebruik. "
         "Die fotograwe word hieronder genoem."
     )

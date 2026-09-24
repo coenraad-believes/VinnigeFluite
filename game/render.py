@@ -64,7 +64,13 @@ def card_html(car: dict, credit: dict | None = None, *, highlight: str | None = 
     rows = []
     for s in STATS:
         cls = "vf-row vf-hl" if s.key == highlight else "vf-row"
-        rows.append(f'<div class="{cls}"><span>{s.icon} {s.label}</span><b>{html.escape(s.display(car))}</b></div>')
+        value = html.escape(s.display(car))
+        if s.key == "jare" and " · " in value:  # narrow cards drop the year range and keep the count
+            span, count = value.split(" · ")
+            value = f'<span class="vf-span">{span} · </span>{count}'
+        elif s.key == "verbruik_l100" and value.startswith("⚡ "):  # the engine row still says Elektries
+            value = f'<span class="vf-ico">⚡ </span>{value[2:]}'
+        rows.append(f'<div class="{cls}"><span><span class="vf-ico">{s.icon} </span>{s.label}</span><b>{value}</b></div>')
     badge = {"wen": "🏆 WEN!", "gelyk": "🤝 GELYK"}.get(result, "")
     return f"""
 <div class="vf-card {'vf-big' if big else ''} vf-{result or 'plain'}" style="--tint:{colour(car)}">
@@ -98,13 +104,28 @@ CSS = """
   align-items:center; gap:8px; font-weight:800; font-size:1.05rem; line-height:1.2; }
 .vf-flag { font-size:1.4rem; }
 .vf-pic { position:relative; background:#eee; }
-.vf-photo { display:block; width:100%; aspect-ratio:16/10; object-fit:cover; }
+/* !important: Streamlit's markdown styles give images object-fit:scale-down, which leaves grey bars */
+.vf-photo { display:block; width:100%; aspect-ratio:16/10; object-fit:cover !important; }
 .vf-badge { position:absolute; top:8px; right:8px; background:#ffd60a; color:#000; font-weight:900;
   padding:4px 10px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.3); }
 .vf-stats { padding:6px 10px; }
 .vf-row { display:flex; justify-content:space-between; padding:5px 8px; border-radius:8px; font-size:.95rem; }
 .vf-row:nth-child(odd) { background:#f4f4f6; }
-.vf-row b { font-variant-numeric: tabular-nums; }
+.vf-row b { font-variant-numeric: tabular-nums; white-space:nowrap; padding-left:6px; }
+.vf-row > span { white-space:nowrap; }
+/* Cards shrink when 3 or 4 sit side by side: smaller text first, then drop the icons and year range. */
+.vf-card { container-type:inline-size; }
+@container (max-width: 330px) {
+  .vf-stats { padding:4px 6px; }
+  .vf-row { font-size:.8rem; padding:4px 6px; }
+  .vf-head { font-size:.9rem; padding:6px 8px; }
+  .vf-fact { font-size:.72rem; padding:4px 8px 6px; }
+  .vf-credit { padding:0 8px 6px; }
+}
+@container (max-width: 270px) {
+  .vf-ico, .vf-span { display:none; }
+  .vf-hl { transform:none; }
+}
 .vf-hl { background:#ffd60a !important; font-weight:800; transform:scale(1.03); }
 .vf-fact { font-size:.8rem; padding:4px 14px 8px; color:#444; }
 .vf-credit { font-size:.62rem; color:#888; padding:0 14px 8px; }
@@ -121,7 +142,10 @@ div[class*="st-key-kieskaart"] .stButton button { width:100%; min-height:2.5rem;
 div[class*="st-key-kieskaart"] .stButton button::after { margin-left:auto; padding-left:10px; font-weight:800;
   font-variant-numeric:tabular-nums; white-space:nowrap; }
 div[class*="st-key-kieskaart"] .stButton button:hover { background:#ffd60a; border-color:var(--tint); transform:scale(1.02); }
-div[class*="st-key-kieskaart"] .stButton button > div { flex:0 1 auto; }
+div[class*="st-key-kieskaart"] .stButton button { justify-content:flex-start !important; }
+div[class*="st-key-kieskaart"] .stButton button > div,
+div[class*="st-key-kieskaart"] .stButton button > div > span { justify-content:flex-start !important; }
+div[class*="st-key-kieskaart"] .stButton button > div { flex:0 1 auto; margin:0 !important; }
 div[class*="st-key-kieskaart"] .vf-fact { padding-top:8px; }
 .vf-back { background:repeating-linear-gradient(45deg,#1d3557,#1d3557 14px,#274c77 14px,#274c77 28px);
   border-color:#1d3557; min-height:300px; display:flex; align-items:center; justify-content:center; }

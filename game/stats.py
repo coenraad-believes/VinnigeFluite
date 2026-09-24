@@ -1,6 +1,10 @@
-"""The six stats on every card, and which direction wins."""
+"""The stats on every card, and which direction wins."""
 
 from dataclasses import dataclass
+
+# Electric cars get a petrol-equivalent consumption, the way European comparisons do it:
+# one litre of petrol holds about 8.9 kWh of energy.
+PETROL_KWH_PER_LITRE = 8.9
 
 
 @dataclass(frozen=True)
@@ -14,6 +18,8 @@ class Stat:
     def value(self, car: dict) -> float:
         if self.key == "jare":
             return car["jaar_einde"] - car["jaar_begin"] + 1
+        if self.key == "verbruik_l100" and car.get("kwh_100km"):
+            return round(car["kwh_100km"] / PETROL_KWH_PER_LITRE, 1)
         return car[self.key]
 
     def display(self, car: dict) -> str:
@@ -21,7 +27,11 @@ class Stat:
             years = self.value(car)
             span = str(car["jaar_begin"]) if years == 1 else f"{car['jaar_begin']}–{car['jaar_einde']}"
             return f"{span} · {years} jaar"
+        if self.key == "enjin_cc" and not car["enjin_cc"]:
+            return "⚡ Elektries"
         v = self.value(car)
+        if self.key == "verbruik_l100" and car.get("kwh_100km"):
+            return f"⚡ {v:.1f} {self.unit}".replace(".", ",")
         text = f"{v:.1f}".replace(".", ",") if isinstance(v, float) else f"{v:,}".replace(",", " ")
         return f"{text} {self.unit}"
 
@@ -39,5 +49,6 @@ STATS = [
     Stat("massa_kg", "Massa", "kg", False, "⚖️"),
     Stat("jare", "Produksiejare", "", True, "📅"),
     Stat("enjin_cc", "Enjingrootte", "cc", True, "🔧"),
+    Stat("verbruik_l100", "Brandstof", "l/100 km", False, "⛽"),
 ]
 BY_KEY = {s.key: s for s in STATS}

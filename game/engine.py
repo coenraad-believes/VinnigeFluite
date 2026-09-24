@@ -6,7 +6,9 @@ Rules:
   player's top card is compared on that stat.
 - The single best card wins all compared cards plus the pot (to the bottom of the pile).
   If the chooser wins, it stays their turn; otherwise the turn passes to the winner.
-- On a tie the cards go into the pot and the chooser keeps the turn.
+- On a tie the cards go into the pot, and only the tied players play the next round (an
+  "afspeel"), again and again until one of them wins it and takes the pot. The chooser keeps
+  the turn if they are in the tie; otherwise the next tied player chooses.
 - Players with no cards left are out. The game ends when one player is left, or when
   the round limit (if any) is reached — then the player with the most cards wins.
 
@@ -52,6 +54,7 @@ class RoundResult:
     values: dict[int, float]
     winner: int | None  # None means a tie (cards went to the pot)
     pot_won: int = 0  # how many pot cards the winner collected
+    tie_off: bool = False  # only the players from a previous tie played this round
 
 
 @dataclass
@@ -64,6 +67,7 @@ class GameState:
     last: RoundResult | None = None
     recent: list[list[str]] = field(default_factory=list)  # cards played in the last few rounds
     swaps: int = 0  # how many times a card was quietly swapped
+    tied: list[int] = field(default_factory=list)  # players in an afspeel after a tie (empty: everyone plays)
 
     @property
     def rigged(self) -> bool:
@@ -72,6 +76,10 @@ class GameState:
 
     def active_players(self) -> list[int]:
         return [i for i, p in enumerate(self.players) if p.active]
+
+    def contenders(self) -> list[int]:
+        """Who plays the next round: the tied players during an afspeel, otherwise everyone."""
+        return [i for i in self.tied if self.players[i].active] or self.active_players()
 
     @property
     def over(self) -> bool:
@@ -105,7 +113,7 @@ class GameState:
                                   "values": {int(k): v for k, v in last["values"].items()}})
         return cls(players=[Player(**p) for p in d["players"]], current=d["current"], pot=d["pot"],
                    rounds=d["rounds"], max_rounds=d["max_rounds"], last=last,
-                   recent=d.get("recent", []), swaps=d.get("swaps", 0))
+                   recent=d.get("recent", []), swaps=d.get("swaps", 0), tied=d.get("tied", []))
 
 
 def new_game(players: list[tuple[str, str]], card_ids: list[str], max_rounds: int | None = None,
@@ -130,7 +138,8 @@ def play_round(state: GameState, stat_key: str, cars: dict[str, dict],
         raise RuntimeError("Die spel is klaar")
     stat = BY_KEY[stat_key]
     chooser = state.current
-    order = [chooser] + [i for i in state.active_players() if i != chooser]
+    tie_off = bool(state.tied)
+    order = [chooser] + [i for i in state.contenders() if i != chooser]
     if state.rigged:
         _doctor(state, stat, cars, order, rng or random.Random())
     played = {i: state.players[i].pile.pop(0) for i in order}
@@ -144,23 +153,32 @@ def play_round(state: GameState, stat_key: str, cars: dict[str, dict],
         state.players[winner].pile.extend(list(played.values()) + state.pot)
         state.pot = []
         state.current = winner
+        state.tied = []
     else:
         winner, pot_won = None, 0
         state.pot.extend(played.values())
-        if not state.players[chooser].active:  # chooser played their last card in a tie
+        tied = [i for i in top if state.players[i].active]
+        # An afspeel needs two players with cards. In a doctored game, Pappa and Mamma never
+        # play one on their own, or one of them would win the pot.
+        if len(tied) < 2 or (state.rigged and all(state.players[i].rigged for i in tied)):
+            tied = []
+        state.tied = tied
+        if tied and chooser not in tied:
+            state.current = _next_active(state, chooser, among=tied)
+        elif not state.players[chooser].active:  # chooser played their last card in a tie
             state.current = _next_active(state, chooser)
 
     state.rounds += 1
     state.recent = (state.recent + [list(played.values())])[-RECENT_ROUNDS:]
-    state.last = RoundResult(chooser, stat_key, played, values, winner, pot_won)
+    state.last = RoundResult(chooser, stat_key, played, values, winner, pot_won, tie_off)
     return state.last
 
 
-def _next_active(state: GameState, start: int) -> int:
+def _next_active(state: GameState, start: int, among: list[int] | None = None) -> int:
     n = len(state.players)
     for step in range(1, n + 1):
         i = (start + step) % n
-        if state.players[i].active:
+        if state.players[i].active and (among is None or i in among):
             return i
     return start
 
