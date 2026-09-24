@@ -7,9 +7,24 @@ Alles loop plaaslik op jou rekenaar, en jy het geen internet nodig om te speel n
 
 ## Hoe om te begin / Getting started
 
-Jy het [uv](https://docs.astral.sh/uv/) nodig. *Requires uv.*
+Jy het [uv](https://docs.astral.sh/uv/) nodig. *Requires uv.* Installeer dit so: *Install it like this:*
 
 ```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# of met Homebrew / or with Homebrew
+brew install uv
+```
+
+Maak dan 'n nuwe terminaal oop, en laai die speletjie af en begin dit: *Then open a new terminal, download the game and start it:*
+
+```bash
+git clone https://github.com/coenraad-believes/VinnigeFluite.git
+cd VinnigeFluite
 uv python install 3.12
 uv sync
 uv run streamlit run app.py        # maak http://localhost:8501 oop
