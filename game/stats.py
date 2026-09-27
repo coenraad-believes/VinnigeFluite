@@ -6,6 +6,9 @@ from dataclasses import dataclass
 # one litre of petrol holds about 8.9 kWh of energy.
 PETROL_KWH_PER_LITRE = 8.9
 
+# Stats an electric car doesn't have.
+ENGINE_KEYS = {"enjin_cc", "silinders"}
+
 
 @dataclass(frozen=True)
 class Stat:
@@ -27,17 +30,17 @@ class Stat:
             years = self.value(car)
             span = str(car["jaar_begin"]) if years == 1 else f"{car['jaar_begin']}–{car['jaar_einde']}"
             return f"{span} · {years} jaar"
-        if self.key == "enjin_cc" and not car["enjin_cc"]:
+        if self.key in ENGINE_KEYS and not car["enjin_cc"]:
             return "⚡ Elektries"
         v = self.value(car)
         if self.key == "verbruik_l100" and car.get("kwh_100km"):
             return f"⚡ {v:.1f} {self.unit}".replace(".", ",")
         text = f"{v:.1f}".replace(".", ",") if isinstance(v, float) else f"{v:,}".replace(",", " ")
-        return f"{text} {self.unit}"
+        return f"{text} {self.unit}".rstrip()
 
     def choosable(self, car: dict) -> bool:
-        """An electric car has no engine size, so it can't pick Enjingrootte."""
-        return not (self.key == "enjin_cc" and not car["enjin_cc"])
+        """An electric car has no engine, so it can't pick Enjingrootte or Silinders."""
+        return not (self.key in ENGINE_KEYS and not car["enjin_cc"])
 
     @property
     def hint(self) -> str:
@@ -53,6 +56,7 @@ STATS = [
     Stat("massa_kg", "Massa", "kg", False, "⚖️"),
     Stat("jare", "Produksiejare", "", True, "📅"),
     Stat("enjin_cc", "Enjingrootte", "cc", True, "🔧"),
+    Stat("silinders", "Silinders", "", True, "🔩"),
     Stat("verbruik_l100", "Brandstof", "l/100 km", False, "⛽"),
 ]
 BY_KEY = {s.key: s for s in STATS}

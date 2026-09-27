@@ -10,7 +10,7 @@ CARS = load_cars()
 
 def car(cid, **stats):
     base = dict(id=cid, topspoed_kmh=200, nul_tot_100_s=6.0, kwartmyl_s=14.0, massa_kg=1300,
-                jaar_begin=2000, jaar_einde=2004, enjin_cc=2000, krag_kw=150, wringkrag_nm=300, verbruik_l100=9.0)
+                jaar_begin=2000, jaar_einde=2004, enjin_cc=2000, silinders=4, krag_kw=150, wringkrag_nm=300, verbruik_l100=9.0)
     return base | stats
 
 
@@ -35,10 +35,12 @@ class DataTests(unittest.TestCase):
                 self.assertTrue(600 <= c["massa_kg"] <= 3000)
                 if c.get("kwh_100km"):  # electric: no engine, petrol-equivalent consumption
                     self.assertEqual(c["enjin_cc"], 0)
+                    self.assertEqual(c["silinders"], 0)
                     self.assertNotIn("verbruik_l100", c)
                     self.assertTrue(10 <= c["kwh_100km"] <= 35)
                 else:
                     self.assertTrue(900 <= c["enjin_cc"] <= 8500)
+                    self.assertIn(c["silinders"], (2, 3, 4, 5, 6, 8, 10, 12, 16))
                     self.assertTrue(1.0 <= c["verbruik_l100"] <= 30)
                 self.assertTrue(20 <= c["krag_kw"] <= 1500)
                 self.assertTrue(80 <= c["wringkrag_nm"] <= 2500)
@@ -55,7 +57,7 @@ class RuleTests(unittest.TestCase):
 
     def test_direction_of_every_stat(self):
         fast = car("fast", topspoed_kmh=300, nul_tot_100_s=3.0, kwartmyl_s=11.0, massa_kg=1000,
-                   jaar_begin=1990, jaar_einde=2020, enjin_cc=6000, krag_kw=400, wringkrag_nm=700, verbruik_l100=5.0)
+                   jaar_begin=1990, jaar_einde=2020, enjin_cc=6000, silinders=8, krag_kw=400, wringkrag_nm=700, verbruik_l100=5.0)
         slow = car("slow")
         cars = {"fast": fast, "slow": slow}
         for stat in STATS:
@@ -71,12 +73,16 @@ class RuleTests(unittest.TestCase):
         self.assertEqual(fuel.value(ev), 2.0)  # 17.8 kWh / 8.9 kWh per litre
         self.assertEqual(fuel.display(ev), "⚡ 2,0 l/100 km")
         self.assertEqual(cc.display(ev), "⚡ Elektries")
+        self.assertEqual(BY_KEY["silinders"].display(ev), "⚡ Elektries")
+        self.assertEqual(BY_KEY["silinders"].display(CARS["bugatti-chiron"]), "16")
+        self.assertEqual(cc.display(CARS["li-auto-l9"]), "1 496 cc")  # a hybrid counts its petrol engine
         self.assertEqual(fuel.value(car("p", verbruik_l100=7.2)), 7.2)
         self.assertFalse(fuel.higher_wins)
 
     def test_electric_car_cannot_choose_engine_size(self):
         cars = {"ev": car("ev", enjin_cc=0, kwh_100km=18.0), "b1": car("b1"), "a2": car("a2"), "b2": car("b2")}
         self.assertFalse(BY_KEY["enjin_cc"].choosable(cars["ev"]))
+        self.assertFalse(BY_KEY["silinders"].choosable(cars["ev"]))
         self.assertTrue(BY_KEY["enjin_cc"].choosable(cars["b1"]))
         self.assertTrue(BY_KEY["verbruik_l100"].choosable(cars["ev"]))
         g = self.game(["ev", "a2"], ["b1", "b2"])

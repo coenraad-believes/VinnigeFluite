@@ -43,10 +43,12 @@ Om 'n spesifieke foto vas te pen, voeg `"foto": "File:....jpg"` (die Commons-lê
 
 - Die 124 kaarte word geskommel en uitgedeel.
 - Wie se beurt dit is, kies iets van hul boonste kaart. Almal se boonste kaarte word vergelyk.
-- **Hoër wen:** Topspoed, Krag (kW), Wringkrag (Nm), Produksiejare (hoeveel jaar lank gebou), Enjingrootte.
+- **Hoër wen:** Topspoed, Krag (kW), Wringkrag (Nm), Produksiejare (hoeveel jaar lank gebou), Enjingrootte, Silinders.
   **Laer wen:** 0–100 km/h, Kwartmyl, Massa, Brandstof (l/100 km).
-- Elektriese karre ⚡ het geen enjingrootte nie (0 cc). Hul brandstofverbruik is die Europese petrol-ekwivalent:
-  kWh per 100 km gedeel deur 8,9 (die energie in een liter petrol).
+- Elektriese karre ⚡ het geen enjin nie (0 cc, 0 silinders), so hulle kan nie Enjingrootte of Silinders kies nie.
+  Hul brandstofverbruik is die Europese petrol-ekwivalent: kWh per 100 km gedeel deur 8,9 (die energie in een liter petrol).
+- Hibriede karre (soos die Ferrari SF90 en Li Auto L9) tel hul petrolenjin se grootte en silinders.
+  Die Mazda RX-7 se wankelenjin het 2 rotors, en dié tel as 2 silinders.
 - As jy wen, is dit weer jou beurt. As iemand jou klop, is dit hulle beurt.
 - Gelykop: die kaarte gaan in die pot, en net die spelers wat gelykop was, speel 'n afspeel totdat een wen en die pot kry.
 - Wie al die kaarte het, of die meeste as die rondtes op is, wen.

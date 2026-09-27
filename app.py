@@ -142,7 +142,7 @@ def screen_begin() -> None:
                 "- Die 124 kaarte word geskommel en uitgedeel.\n"
                 "- Wie se beurt dit is, kyk na sy of haar **boonste kaart** en kies iets om te vergelyk.\n"
                 "- Almal se boonste kaarte word omgedraai. Die beste waarde wen al die kaarte!\n"
-                "  - **Topspoed**, **Krag**, **Wringkrag**, **Produksiejare** en **Enjingrootte**: hoër wen ⬆️\n"
+                "  - **Topspoed**, **Krag**, **Wringkrag**, **Produksiejare**, **Enjingrootte** en **Silinders**: hoër wen ⬆️\n"
                 "  - **0–100 km/h**, **Kwartmyl**, **Massa** en **Brandstof**: laer wen ⬇️\n"
                 "- As jy wen, is dit weer jou beurt. As iemand jou klop, is dit hulle beurt.\n"
                 "- Gelykop? Die kaarte gaan in die **pot**. Net die spelers wat gelykop was, speel 'n **afspeel** ⚔️ "
