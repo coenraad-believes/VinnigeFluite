@@ -1,6 +1,6 @@
 # 🏎️ Vinnige Fluite 💨
 
-'n Afrikaanse Top Trumps-kaartspel vir kinders: 124 regte karre, 2 tot 4 spelers op een skerm.
+'n Afrikaanse Top Trumps-kaartspel vir kinders: 124 regte karre, 2 tot 4 spelers op een skerm of elkeen op hul eie foon.
 Alles loop plaaslik op jou rekenaar, en jy het geen internet nodig om te speel nie.
 
 *An Afrikaans car Top Trumps game for kids. It has 124 real cars and lets 2–4 players take turns on one screen. It runs locally and offline.*
@@ -29,6 +29,13 @@ uv python install 3.12
 uv sync
 uv run streamlit run app.py        # maak http://localhost:8501 oop
 ```
+
+### Speel op julle fone / Play on your phones
+
+Begin die speletjie op die rekenaar soos hierbo, en tik dan **📱 Speel elkeen op sy eie foon**. Die rekenaar wys 'n QR-kode en 'n adres (soos `http://192.168.1.20:8501`). Almal skandeer dit met hul foon (op dieselfde WiFi), tik hul naam en sluit aan. Tik **Almal is hier, speel!** as almal daar is.
+Elke speler sien net hul eie kaart as dit hul beurt is, en almal sien die kaarte wanneer hulle omgedraai word. Die rekenaar se skerm werk as die tafel.
+
+*Start the game on the computer, then tap **📱 Speel elkeen op sy eie foon**. Phones on the same WiFi scan the QR code, enter a name and join. If the phones can't connect, allow incoming connections for Python when macOS asks (System Settings → Network → Firewall). A phone that reloads stays the same player; if a phone opens a fresh page mid-game, tap **Is jy een van die spelers?** and pick your name.*
 
 Die foto's is reeds afgelaai. Om hulle weer af te laai (jy het internet nodig): *Photos are already downloaded. To re-fetch them (needs internet):*
 
@@ -61,6 +68,7 @@ Om 'n spesifieke foto vas te pen, voeg `"foto": "File:....jpg"` (die Commons-lê
 | `game/engine.py` | spelreëls (suiwer Python, getoets) |
 | `game/stats.py` | die eienskappe en watter kant wen |
 | `game/render.py` | kaart-HTML/CSS |
+| `game/room.py` | die gedeelde spel vir fone (wagkamer, beurte) |
 | `game/storage.py` | laai kaarte, stoor die spel in `data/savegame.json` |
 | `data/cars.json` | die 124 kaarte |
 | `data/credits.json` | fotograaf en lisensie vir elke foto |

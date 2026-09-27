@@ -2,6 +2,7 @@
 gatherUsageStats = false
 
 [server]
+address = "0.0.0.0"  # phones on the same WiFi can connect (see the Network URL)
 headless = false
 runOnSave = false
 
