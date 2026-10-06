@@ -341,7 +341,7 @@ def start_room(max_rounds: int | None) -> None:
         ss.net_error = str(e)
 
 
-@st.fragment(run_every=1)
+@st.fragment(run_every=0.5)
 def watch_room(version: int) -> None:
     """Redraw this phone as soon as someone else changes the game."""
     if ROOM.version != version:
