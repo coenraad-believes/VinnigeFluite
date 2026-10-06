@@ -1,6 +1,5 @@
-"""HTML for the cards. Photos are embedded as base64 so the app never needs the network."""
+"""HTML for the cards. Photos are served by this app itself (static/cars), so the game never needs the internet."""
 
-import base64
 import html
 import zlib
 from functools import lru_cache
@@ -9,7 +8,7 @@ from pathlib import Path
 from game.stats import STATS
 
 ROOT = Path(__file__).resolve().parent.parent
-PHOTOS = ROOT / "assets" / "cars"
+PHOTOS = ROOT / "static" / "cars"
 
 # Card header colours, picked per car so every card looks a little different.
 PALETTE = ["#e63946", "#1d7fd6", "#f18f01", "#2a9d8f", "#8e44ad", "#d62f7f", "#2b9348", "#e76f51"]
@@ -19,14 +18,15 @@ def colour(car: dict) -> str:
     return PALETTE[zlib.crc32(car["id"].encode()) % len(PALETTE)]
 
 
-@lru_cache(maxsize=128)
+@lru_cache(maxsize=None)
 def photo_src(car_id: str) -> str | None:
-    path = PHOTOS / f"{car_id}.jpg"
-    if not path.exists():
+    """The photo's URL on Streamlit's static file server (server.enableStaticServing).
+
+    The browser downloads each photo once and caches it, so a rerun only sends the short URL.
+    (Inlining the photos as base64 sent up to 1 MB with every tap, which made the game lag.)"""
+    if not (PHOTOS / f"{car_id}.jpg").exists():
         return None
-    data = path.read_bytes()
-    mime = "image/png" if data.startswith(b"\x89PNG") else "image/jpeg"  # a few Commons photos are PNGs
-    return f"data:{mime};base64," + base64.b64encode(data).decode()
+    return f"app/static/cars/{car_id}.jpg"  # relative, so it also works under server.baseUrlPath
 
 
 def silhouette(tint: str) -> str:

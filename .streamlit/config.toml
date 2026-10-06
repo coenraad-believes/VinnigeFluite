@@ -5,6 +5,7 @@ gatherUsageStats = false
 address = "0.0.0.0"  # phones on the same WiFi can connect (see the Network URL)
 headless = false
 runOnSave = false
+enableStaticServing = true  # the car photos in static/cars, cached by the browser (see game/render.py)
 
 [client]
 toolbarMode = "minimal"

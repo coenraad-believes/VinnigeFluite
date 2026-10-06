@@ -5,7 +5,7 @@ For each card in data/cars.json:
   2. Otherwise search Commons for `foto_soek` and pick the first suitable exterior photo.
   3. Fall back to the lead image of the English Wikipedia article `wiki_title`.
 Only public-domain / CC0 / CC BY / CC BY-SA images are accepted. Photos go to
-assets/cars/<id>.jpg and attribution to data/credits.json. Existing photos are skipped;
+static/cars/<id>.jpg and attribution to data/credits.json. Existing photos are skipped;
 pass --force to re-download, or card ids to only process those cards.
 """
 
@@ -22,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CARS = ROOT / "data" / "cars.json"
 CREDITS = ROOT / "data" / "credits.json"
-OUT = ROOT / "assets" / "cars"
+OUT = ROOT / "static" / "cars"
 
 UA = "VinnigeFluite/1.0 (offline kids card game; one-off photo download) python-urllib"
 COMMONS = "https://commons.wikimedia.org/w/api.php"
